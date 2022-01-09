@@ -14,6 +14,7 @@ type copier struct {
 type Copier interface {
 	OfInterface(obj interface{}) interface{}
 	OfReflect(obj reflect.Value) reflect.Value
+	AddressableOfReflect(obj reflect.Value) reflect.Value
 	// Of[T any](obj T) T
 }
 
@@ -47,10 +48,18 @@ func (copier *copier) OfReflect(obj reflect.Value) reflect.Value {
 	return copy2.DeepCopyOfReflect(copier.options, obj)
 }
 
+func (copier *copier) AddressableOfReflect(obj reflect.Value) reflect.Value {
+	return copy2.NewDeepCopyOfReflect(copier.options, obj).Elem()
+}
+
 func OfInterface(obj interface{}) interface{} {
 	return defaultCopier.OfInterface(obj)
 }
 
 func OfReflect(obj reflect.Value) reflect.Value {
 	return defaultCopier.OfReflect(obj)
+}
+
+func AddressableOfReflect(obj reflect.Value) reflect.Value {
+	return defaultCopier.AddressableOfReflect(obj)
 }
