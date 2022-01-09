@@ -53,9 +53,8 @@ func TestDeepCopyInterface(t *testing.T) {
 	type Class struct {
 		Interface iface
 	}
-	copier := Copier{}
 	obj := Class{Interface: testInteger(1)}
-	cpy := copier.DeepCopyOf(obj).(Class)
+	cpy := DeepCopyOf(&Options{IgnoreUnexploredFields: false}, obj).(Class)
 	assert.Equal(t, obj, cpy)
 	assert.Equal(t, 1, cpy.Interface.M())
 	obj.Interface = testInteger(2)
@@ -67,10 +66,9 @@ func TestDeepCopyInterface2(t *testing.T) {
 	type Class struct {
 		Interface iface
 	}
-	copier := Copier{}
 	array := [...]testInteger2{0, 1, 2, 3}
 	obj := &Class{Interface: &array[1]}
-	cpy := copier.DeepCopyOf(obj).(*Class)
+	cpy := DeepCopyOf(&Options{IgnoreUnexploredFields: false}, obj).(*Class)
 	assert.Equal(t, obj, cpy)
 	assert.Equal(t, 1, cpy.Interface.M())
 	obj.Interface = &array[2]

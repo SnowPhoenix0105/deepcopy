@@ -28,11 +28,6 @@ func TestDeepCopyPrivateFieldReflect(t *testing.T) {
 			parray: &[2]int{10, 11},
 		},
 	}
-	copier := Copier{
-		DeepCopyOptions{
-			IgnoreUnexploredFields: false,
-		},
-	}
-	cpy := copier.DeepCopyOf(obj)
+	cpy := DeepCopyOf(&Options{IgnoreUnexploredFields: false}, obj)
 	assert.Equal(t, obj, cpy)
 }

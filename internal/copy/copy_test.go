@@ -25,8 +25,7 @@ func TestStructCopy(t *testing.T) {
 func TestNewDeepCopyOf_Simple(t *testing.T) {
 	type MyInt int
 	var integer MyInt = 123
-	copier := Copier{}
-	ptr, ok := copier.NewDeepCopyOf(integer).(*MyInt)
+	ptr, ok := NewDeepCopyOf(&Options{IgnoreUnexploredFields: false}, integer).(*MyInt)
 	assert.True(t, ok)
 	assert.Equal(t, integer, *ptr)
 	*ptr = 321
@@ -38,8 +37,7 @@ func TestNewDeepCopyOf_Ptr(t *testing.T) {
 	type MyInt int
 	var integer MyInt = 123
 	ptr := &integer
-	copier := Copier{}
-	cpptr, ok := copier.NewDeepCopyOf(ptr).(**MyInt)
+	cpptr, ok := NewDeepCopyOf(&Options{IgnoreUnexploredFields: false}, ptr).(**MyInt)
 	assert.True(t, ok)
 	assert.Equal(t, *ptr, **cpptr)
 	*ptr = 234
@@ -52,8 +50,7 @@ func TestNewDeepCopyOf_Ptr(t *testing.T) {
 
 func TestNewDeepCopyOf_Slice(t *testing.T) {
 	slice := []int{1, 2, 3, 4}
-	copier := Copier{}
-	ptr, ok := copier.NewDeepCopyOf(slice).(*[]int)
+	ptr, ok := NewDeepCopyOf(&Options{IgnoreUnexploredFields: false}, slice).(*[]int)
 	assert.True(t, ok)
 	assert.Equal(t, slice, *ptr)
 	(*ptr)[0] = 5
@@ -66,8 +63,7 @@ func TestNewDeepCopyOf_Slice(t *testing.T) {
 
 func TestNewDeepCopyOf_Map(t *testing.T) {
 	m := map[int]int{1: 1, 2: 2}
-	copier := Copier{}
-	ptr, ok := copier.NewDeepCopyOf(m).(*map[int]int)
+	ptr, ok := NewDeepCopyOf(&Options{IgnoreUnexploredFields: false}, m).(*map[int]int)
 	assert.True(t, ok)
 	assert.Equal(t, m, *ptr)
 	(*ptr)[3] = 3
@@ -77,9 +73,8 @@ func TestNewDeepCopyOf_Map(t *testing.T) {
 
 func TestNewDeepCopyOf_MapPtr(t *testing.T) {
 	array := [...]int{0, 1, 2, 3, 4}
-	copier := Copier{}
 	m := map[int]*int{1: &array[1], 2: &array[2]}
-	ptr, ok := copier.NewDeepCopyOf(m).(*map[int]*int)
+	ptr, ok := NewDeepCopyOf(&Options{IgnoreUnexploredFields: false}, m).(*map[int]*int)
 	assert.True(t, ok)
 	assert.False(t, m[1] == (*ptr)[1])
 	assert.Equal(t, *(m[1]), *((*ptr)[1]))

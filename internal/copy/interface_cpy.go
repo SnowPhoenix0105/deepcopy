@@ -20,13 +20,13 @@ func init() {
 /*
 DeepCopyInterface deep copy an interface.
 */
-func (copier *Copier) DeepCopyInterface(dst, src reflect.Value) {
+func DeepCopyInterface(options *Options, dst, src reflect.Value) {
 	// copy the itab
 	forceSet(&dst, src)
 	// dst.Set(src)
 
 	// deep-copy the word
-	ptr := copier.newDeepCopyOf(src.Elem())
+	ptr := newDeepCopyOf(options, src.Elem())
 	//var ifaceSize uintptr
 	//if src.NumMethod() == 0 {
 	//	ifaceSize = emptyInterfaceSize

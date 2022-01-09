@@ -63,50 +63,46 @@ func simpleKindAssign(dst, src reflect.Value) {
 	}
 }
 
-type DeepCopyOptions struct {
+type Options struct {
 	IgnoreUnexploredFields bool
 }
 
-type Copier struct {
-	DeepCopyOptions
-}
-
-func (copier *Copier) DeepCopyOf(obj interface{}) interface{} {
+func DeepCopyOf(options *Options, obj interface{}) interface{} {
 	if obj == nil {
 		return nil
 	}
-	return copier.DeepCopyOfReflect(reflect.ValueOf(obj)).Interface()
+	return DeepCopyOfReflect(options, reflect.ValueOf(obj)).Interface()
 }
 
-func (copier *Copier) DeepCopyOfReflect(obj reflect.Value) reflect.Value {
+func DeepCopyOfReflect(options *Options, obj reflect.Value) reflect.Value {
 	if !obj.IsValid() {
 		return reflect.Value{}
 	}
-	return copier.deepCopyOf(obj)
+	return deepCopyOf(options, obj)
 }
 
-func (copier *Copier) NewDeepCopyOf(obj interface{}) interface{} {
+func NewDeepCopyOf(options *Options, obj interface{}) interface{} {
 	if obj == nil {
 		return nil
 	}
-	return copier.NewDeepCopyOfReflect(reflect.ValueOf(obj)).Interface()
+	return NewDeepCopyOfReflect(options, reflect.ValueOf(obj)).Interface()
 }
 
-func (copier *Copier) NewDeepCopyOfReflect(obj reflect.Value) reflect.Value {
+func NewDeepCopyOfReflect(options *Options, obj reflect.Value) reflect.Value {
 	if !obj.IsValid() {
 		return reflect.Value{}
 	}
-	return copier.newDeepCopyOf(obj)
+	return newDeepCopyOf(options, obj)
 }
 
 /*
 newDeepCopyOf require the obj must be valid.
 */
-func (copier *Copier) newDeepCopyOf(obj reflect.Value) reflect.Value {
-	return copier.newDeepCopyOf2(obj, false)
+func newDeepCopyOf(options *Options, obj reflect.Value) reflect.Value {
+	return newDeepCopyOf2(options, obj, false)
 }
 
-func (copier *Copier) newDeepCopyOf2(obj reflect.Value, inDefault bool) reflect.Value {
+func newDeepCopyOf2(options *Options, obj reflect.Value, inDefault bool) reflect.Value {
 	ptr := reflect.New(obj.Type())
 
 	if isSimpleKind(obj.Kind()) {
@@ -120,7 +116,7 @@ func (copier *Copier) newDeepCopyOf2(obj reflect.Value, inDefault bool) reflect.
 			panicUnsupported(obj.Type())
 		}
 		dst := ptr.Elem()
-		forceSet(&dst, copier.deepCopyOf2(obj, true))
+		forceSet(&dst, deepCopyOf2(options, obj, true))
 
 	case reflect.Array:
 		if isSimpleKind(obj.Type().Elem().Kind()) {
@@ -134,14 +130,14 @@ func (copier *Copier) newDeepCopyOf2(obj reflect.Value, inDefault bool) reflect.
 		for i := 0; i < length; i++ {
 			//array.Index(i).Set(deepCopyOf(obj.Index(i)))
 			dst := array.Index(i)
-			forceSet(&dst, copier.deepCopyOf(obj.Index(i)))
+			forceSet(&dst, deepCopyOf(options, obj.Index(i)))
 		}
 
 	case reflect.Interface:
 		if obj.IsNil() {
 			break
 		}
-		copier.DeepCopyInterface(ptr.Elem(), obj)
+		DeepCopyInterface(options, ptr.Elem(), obj)
 
 	case reflect.Struct:
 		numField := obj.NumField()
@@ -155,9 +151,9 @@ func (copier *Copier) newDeepCopyOf2(obj reflect.Value, inDefault bool) reflect.
 				continue
 			}
 			if field.CanSet() {
-				field.Set(copier.deepCopyOf(obj.Field(i)))
+				field.Set(deepCopyOf(options, obj.Field(i)))
 			} else {
-				copier.DeepCopyPrivateFieldReflect(dst, obj, i)
+				DeepCopyPrivateFieldReflect(options, dst, obj, i)
 			}
 		}
 	}
@@ -168,11 +164,11 @@ func (copier *Copier) newDeepCopyOf2(obj reflect.Value, inDefault bool) reflect.
 /*
 deepCopyOf require the obj must be valid.
 */
-func (copier *Copier) deepCopyOf(obj reflect.Value) reflect.Value {
-	return copier.deepCopyOf2(obj, false)
+func deepCopyOf(options *Options, obj reflect.Value) reflect.Value {
+	return deepCopyOf2(options, obj, false)
 }
 
-func (copier *Copier) deepCopyOf2(obj reflect.Value, inDefault bool) reflect.Value {
+func deepCopyOf2(options *Options, obj reflect.Value, inDefault bool) reflect.Value {
 	if isSimpleKind(obj.Kind()) {
 		return obj
 	}
@@ -183,13 +179,13 @@ func (copier *Copier) deepCopyOf2(obj reflect.Value, inDefault bool) reflect.Val
 				panicUnsupported(obj.Type())
 			}
 		}
-		return copier.newDeepCopyOf2(obj, true).Elem()
+		return newDeepCopyOf2(options, obj, true).Elem()
 
 	case reflect.Ptr:
 		if obj.IsNil() {
 			return reflect.Zero(obj.Type())
 		}
-		return copier.newDeepCopyOf(obj.Elem())
+		return newDeepCopyOf(options, obj.Elem())
 
 	case reflect.Slice:
 		if obj.IsNil() {
@@ -200,7 +196,7 @@ func (copier *Copier) deepCopyOf2(obj reflect.Value, inDefault bool) reflect.Val
 		for i := 0; i < length; i++ {
 			//slice.Index(i).Set(deepCopyOf(obj.Index(i)))
 			dst := slice.Index(i)
-			forceSet(&dst, copier.deepCopyOf(obj.Index(i)))
+			forceSet(&dst, deepCopyOf(options, obj.Index(i)))
 		}
 		return slice
 
@@ -211,7 +207,7 @@ func (copier *Copier) deepCopyOf2(obj reflect.Value, inDefault bool) reflect.Val
 		dict := reflect.MakeMap(obj.Type())
 		iter := obj.MapRange()
 		for iter.Next() {
-			dict.SetMapIndex(copier.deepCopyOf(iter.Key()), copier.deepCopyOf(iter.Value()))
+			dict.SetMapIndex(deepCopyOf(options, iter.Key()), deepCopyOf(options, iter.Value()))
 		}
 		return dict
 	}

@@ -1,7 +1,6 @@
 package copy
 
 import (
-	"fmt"
 	"reflect"
 	"unsafe"
 )
@@ -13,11 +12,11 @@ DeepCopyPrivateFieldReflect copy the private field (specified by param fieldNum)
 
 Both src and dst must be addressable.
 */
-func (copier *Copier) DeepCopyPrivateFieldReflect(dst, src reflect.Value, fieldNum int) {
+func DeepCopyPrivateFieldReflect(options *Options, dst, src reflect.Value, fieldNum int) {
 	srcField := src.Field(fieldNum)
 	structField := src.Type().Field(fieldNum)
 	dstPtr := unsafe.Pointer(dst.UnsafeAddr() + structField.Offset)
-	fmt.Println(structField.Name)
+	// fmt.Println(structField.Name)
 
 	if isSimpleKind(srcField.Kind()) {
 		srcPtr := unsafe.Pointer(src.UnsafeAddr() + structField.Offset)
@@ -27,19 +26,19 @@ func (copier *Copier) DeepCopyPrivateFieldReflect(dst, src reflect.Value, fieldN
 
 	switch srcField.Kind() {
 	case reflect.Ptr:
-		ptr := copier.newDeepCopyOf(srcField)
+		ptr := newDeepCopyOf(options, srcField)
 		*(**typeT)(dstPtr) = *(**typeT)(unsafe.Pointer(ptr.Pointer()))
 
 	case reflect.Slice:
-		ptr := copier.newDeepCopyOf(srcField)
+		ptr := newDeepCopyOf(options, srcField)
 		*(*[]typeT)(dstPtr) = *(*[]typeT)(unsafe.Pointer(ptr.Pointer()))
 
 	case reflect.Map:
-		ptr := copier.newDeepCopyOf(srcField)
+		ptr := newDeepCopyOf(options, srcField)
 		*(*map[typeT]typeT)(dstPtr) = *(*map[typeT]typeT)(unsafe.Pointer(ptr.Pointer()))
 
 	default:
-		ptr := copier.newDeepCopyOf(srcField)
+		ptr := newDeepCopyOf(options, srcField)
 		MemoryCopy(dstPtr, unsafe.Pointer(ptr.Pointer()), int(structField.Type.Size()))
 	}
 }
