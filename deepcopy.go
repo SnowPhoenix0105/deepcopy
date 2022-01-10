@@ -6,6 +6,7 @@ import (
 )
 
 type Options = copy2.Options
+type UnsafeOptions = copy2.UnsafeOptions
 
 type copier struct {
 	options *Options
@@ -19,9 +20,29 @@ type Copier interface {
 }
 
 var defaultCopier = copier{
-	options: &Options{
-		IgnoreUnexploredFields: false,
+	options: NewDefaultOption(),
+}
+
+var fullCopier = copier{
+	options: &copy2.Options{
+		CreateNewChan: false,
+		IgnoreFunc:    false,
+		Unsafe: copy2.UnsafeOptions{
+			DeepCopyInterface:        true,
+			DeepCopyUnexportedFields: true,
+		},
 	},
+}
+
+func NewDefaultOption() *Options {
+	return &copy2.Options{
+		CreateNewChan: false,
+		IgnoreFunc:    false,
+		Unsafe: copy2.UnsafeOptions{
+			DeepCopyUnexportedFields: false,
+			DeepCopyInterface:        false,
+		},
+	}
 }
 
 func WithOptions(options *Options) Copier {
@@ -38,6 +59,10 @@ func SetDefaultOptions(options *Options) {
 
 func Default() Copier {
 	return &defaultCopier
+}
+
+func Unsafe() Copier {
+	return &fullCopier
 }
 
 func (copier *copier) OfInterface(obj interface{}) interface{} {

@@ -64,7 +64,14 @@ func simpleKindAssign(dst, src reflect.Value) {
 }
 
 type Options struct {
-	IgnoreUnexploredFields bool
+	CreateNewChan bool
+	IgnoreFunc    bool
+	Unsafe        UnsafeOptions
+}
+
+type UnsafeOptions struct {
+	DeepCopyUnexportedFields bool
+	DeepCopyInterface        bool
 }
 
 func DeepCopyOf(options *Options, obj interface{}) interface{} {
@@ -137,24 +144,17 @@ func newDeepCopyOf2(options *Options, obj reflect.Value, inDefault bool) reflect
 		if obj.IsNil() {
 			break
 		}
-		DeepCopyInterface(options, ptr.Elem(), obj)
+		if options.Unsafe.DeepCopyInterface {
+			DeepCopyInterface(options, ptr.Elem(), obj)
+		} else {
+			ptr.Elem().Set(obj)
+		}
 
 	case reflect.Struct:
-		numField := obj.NumField()
-		dst := ptr.Elem()
-		// dst.Set(obj)
-		forceSet(&dst, obj)
-		for i := 0; i < numField; i++ {
-			field := dst.Field(i)
-			if isSimpleKind(field.Kind()) {
-				// it has already been copied by dst.Set(obj)
-				continue
-			}
-			if field.CanSet() {
-				field.Set(deepCopyOf(options, obj.Field(i)))
-			} else {
-				DeepCopyPrivateFieldReflect(options, dst, obj, i)
-			}
+		if options.Unsafe.DeepCopyUnexportedFields {
+			deepCopyAllField(options, ptr, obj)
+		} else {
+			deepCopyExportedField(options, ptr, obj)
 		}
 	}
 
@@ -210,5 +210,19 @@ func deepCopyOf2(options *Options, obj reflect.Value, inDefault bool) reflect.Va
 			dict.SetMapIndex(deepCopyOf(options, iter.Key()), deepCopyOf(options, iter.Value()))
 		}
 		return dict
+
+	case reflect.Chan:
+		if options.CreateNewChan {
+			return reflect.MakeChan(obj.Type(), obj.Len())
+		} else {
+			return obj
+		}
+
+	case reflect.Func:
+		if options.IgnoreFunc {
+			return reflect.Zero(obj.Type())
+		} else {
+			return obj
+		}
 	}
 }
