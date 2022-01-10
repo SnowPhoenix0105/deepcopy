@@ -31,7 +31,7 @@ func TestCopier_OfInterface(t *testing.T) {
 	*obj.sub.integer = 5
 	*obj.sub2.integer = 3
 
-	deepCopy := Default()
+	deepCopy := Unsafe()
 	cpy, ok := deepCopy.OfInterface(obj).(Top)
 	assert.True(t, ok)
 	assert.Equal(t, obj, cpy)

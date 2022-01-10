@@ -5,6 +5,15 @@ import (
 	"testing"
 )
 
+var copyPrivateOptions = Options{
+	CreateNewChan: false,
+	IgnoreFunc:    false,
+	Unsafe: UnsafeOptions{
+		DeepCopyUnexportedFields: true,
+		DeepCopyInterface:        false,
+	},
+}
+
 func TestDeepCopyPrivateFieldReflect(t *testing.T) {
 	type Sub struct {
 		str    string
@@ -28,6 +37,6 @@ func TestDeepCopyPrivateFieldReflect(t *testing.T) {
 			parray: &[2]int{10, 11},
 		},
 	}
-	cpy := DeepCopyOf(&Options{IgnoreUnexploredFields: false}, obj)
+	cpy := DeepCopyOf(&copyPrivateOptions, obj)
 	assert.Equal(t, obj, cpy)
 }
